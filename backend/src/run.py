@@ -1,23 +1,22 @@
 import time
-from typing import TypedDict
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
+from src.model import User
+from src.persistence import load_users_from_file, save_users_to_file
 
 app = Flask(__name__)
 CORS(app)
 
 
-class User(TypedDict):
-    name: str
-    score: int
-
-
-users: list[User] = []
+# Load users initially
+users: list[User] = load_users_from_file()
 
 ERR_USERNAME_NOT_VALID = "ERR_USERNAME_NOT_VALID"
 ERR_USER_ALREADY_EXISTS = "ERR_USER_ALREADY_EXISTS"
 
-# check frontend behaviour on network delays
+# Check frontend behaviour on network delays
 SIMULATED_DELAY = 0.6
 
 
@@ -49,6 +48,7 @@ def add_user():
             400,
         )
     users.append(User(name=new_name, score=0))
+    save_users_to_file(users)
     return jsonify({"message": "User added successfully!"}), 201
 
 
@@ -59,7 +59,8 @@ def update_users():
     new_users = request.json.get("users")
     users.clear()
     users.extend(new_users)
-    return jsonify({"message": "Users updates successfully!"}), 201
+    save_users_to_file(users)
+    return jsonify({"message": "Users updated successfully!"}), 201
 
 
 if __name__ == "__main__":
